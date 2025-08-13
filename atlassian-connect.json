@@ -1,12 +1,12 @@
 {
-  "key": "bito-app-kunal",
-  "name": "BitBucket App for Staging",
+  "key": "bito-app-kunal-001",
+  "name": "Test app by kunal",
   "description": "Integrates Bitbucket with Agentic CRA ",
   "vendor": {
     "name": "BITO Inc.",
     "url": "https://bito.ai/"
   },
-  "baseUrl": "https://9fa2fa3b4bec.ngrok-free.app/int/api/v1",
+  "baseUrl": "https://staging.bito.ai/agent-integration/int/api/v1",
   "authentication": {
     "type": "jwt"
   },
