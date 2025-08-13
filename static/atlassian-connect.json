@@ -1,0 +1,47 @@
+{
+  "key": "bito-app-kunal",
+  "name": "BitBucket App for Staging",
+  "description": "Integrates Bitbucket with Agentic CRA ",
+  "vendor": {
+    "name": "BITO Inc.",
+    "url": "https://bito.ai/"
+  },
+  "baseUrl": "https://9fa2fa3b4bec.ngrok-free.app/int/api/v1",
+  "authentication": {
+    "type": "jwt"
+  },
+  "lifecycle": {
+    "installed": "/installed",
+    "uninstalled": "/uninstalled"
+  },
+  "modules": {
+    "webhooks": [
+      {
+        "event": "pullrequest:created",
+        "url": "/webhook/bitbucket"
+      },
+      {
+        "event": "pullrequest:updated",
+        "url": "/webhook/bitbucket"
+      },
+      {
+        "event": "pullrequest:fulfilled",
+        "url": "/webhook/bitbucket"
+      },
+      {
+        "event": "pullrequest:rejected",
+        "url": "/webhook/bitbucket"
+      },
+      {
+        "event": "pullrequest:comment_created",
+        "url": "/webhook/bitbucket"
+      },
+      {
+        "event": "pullrequest:comment_updated",
+        "url": "/webhook/bitbucket"
+      }
+    ]
+  },
+  "scopes": ["account", "repository", "pullrequest"],
+  "contexts": ["account", "repository"]
+}
