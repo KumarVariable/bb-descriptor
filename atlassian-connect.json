@@ -1,12 +1,13 @@
 {
-  "key": "com.kunal.bitbucket.plugins.codefixagent",
-  "name": "code fixer agent",
-  "description": "get your code fixed reviewed with artificially intelligent tool",
+  "key": "ai.kunal.bitbucket.aol.code.review",
+  "name": "Coder Review Agent",
+  "description": "AI-assisted code review and automated fix suggestions for Bitbucket pull requests.",
   "vendor": {
-    "name": "KUNAL KMR",
-    "url": "https://bito.ai/"
+    "name": "Kunal Kumar",
+    "url": "https://staging.bito.ai/"
   },
-  "baseUrl": "https://90f661bb1893.ngrok-free.app/int/api/v1",
+  "baseUrl": "https://staging.bito.ai/agent-integration/int/api/v1",
+  "apiVersion": 1,
   "authentication": {
     "type": "jwt"
   },
@@ -16,30 +17,12 @@
   },
   "modules": {
     "webhooks": [
-      {
-        "event": "pullrequest:created",
-        "url": "/webhook/bitbucket"
-      },
-      {
-        "event": "pullrequest:updated",
-        "url": "/webhook/bitbucket"
-      },
-      {
-        "event": "pullrequest:fulfilled",
-        "url": "/webhook/bitbucket"
-      },
-      {
-        "event": "pullrequest:rejected",
-        "url": "/webhook/bitbucket"
-      },
-      {
-        "event": "pullrequest:comment_created",
-        "url": "/webhook/bitbucket"
-      },
-      {
-        "event": "pullrequest:comment_updated",
-        "url": "/webhook/bitbucket"
-      }
+      { "event": "pullrequest:created",   "url": "/webhook/bitbucket" },
+      { "event": "pullrequest:updated",   "url": "/webhook/bitbucket" },
+      { "event": "pullrequest:fulfilled", "url": "/webhook/bitbucket" },
+      { "event": "pullrequest:rejected",  "url": "/webhook/bitbucket" },
+      { "event": "pullrequest:comment_created", "url": "/webhook/bitbucket" },
+      { "event": "pullrequest:comment_updated", "url": "/webhook/bitbucket" }
     ]
   },
   "scopes": ["account", "repository", "pullrequest"],
