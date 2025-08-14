@@ -1,12 +1,12 @@
 {
-  "key": "bito-app-kunal-001",
-  "name": "Test app by kunal",
-  "description": "Integrates Bitbucket with Agentic CRA ",
+  "key": "code_reviewer_agent_v1",
+  "name": "code fixer agent",
+  "description": "get your code fixed reviewed with artificially intelligent tool",
   "vendor": {
-    "name": "BITO Inc.",
+    "name": "KUNAL KMR",
     "url": "https://bito.ai/"
   },
-  "baseUrl": "https://staging.bito.ai/agent-integration/int/api/v1",
+  "baseUrl": "https://kumarvariable.github.io/bb-descriptor/",
   "authentication": {
     "type": "jwt"
   },
