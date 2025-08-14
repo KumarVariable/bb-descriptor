@@ -1,5 +1,5 @@
 {
-  "key": "code_reviewer_agent_v1",
+  "key": "com.atlassian.bitbucket.plugins.codefixagent",
   "name": "code fixer agent",
   "description": "get your code fixed reviewed with artificially intelligent tool",
   "vendor": {
