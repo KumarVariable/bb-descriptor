@@ -6,7 +6,7 @@
     "name": "KUNAL KMR",
     "url": "https://bito.ai/"
   },
-  "baseUrl": "https://kumarvariable.github.io/bb-descriptor/",
+  "baseUrl": "https://90f661bb1893.ngrok-free.app/int/api/v1",
   "authentication": {
     "type": "jwt"
   },
