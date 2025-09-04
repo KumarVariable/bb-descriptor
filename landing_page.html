@@ -9,20 +9,22 @@
     .wrap { max-width:600px; margin:10vh auto; background:#fff; border-radius:12px; padding:28px; box-shadow:0 4px 12px rgba(0,0,0,.1); }
     h1 { margin-top:0; color:#0c48c4; }
     code { background:#f5f5f5; padding:2px 6px; border-radius:4px; }
-    .btn { display:inline-block; margin-top:20px; padding:12px 20px; background:#0c48c4; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600; }
+    .btn { display:inline-block; margin-top:16px; padding:12px 20px; background:#0c48c4; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600; }
+    .btn.secondary { background:#444 }
     pre { background:#fafafa; padding:10px; border-radius:6px; font-size:13px; overflow:auto; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Bito CRA – Installation Landing</h1>
-    <p>Click below to connect your Bitbucket account with Bito CRA.</p>
+    <p>Click below to complete setup. This will call your Go callback with a Base64-encoded <code>state</code>.</p>
 
     <p><strong>Bito User ID:</strong> <code id="bitoUserId">—</code></p>
     <p><strong>Bito Email:</strong> <code id="bitoEmail">—</code></p>
     <p><strong>Workspace ID:</strong> <code id="workspaceId">—</code></p>
 
     <button class="btn" id="connectBtn">Connect to Bito CRA</button>
+    <button class="btn secondary" id="copyBtn">Copy Callback URL</button>
 
     <h3>Debug</h3>
     <pre id="statePreview">{}</pre>
@@ -30,67 +32,71 @@
   </div>
 
   <script>
-    // ---- defaults (replace with your real client_id & callback) ----
+    // ---- defaults (override with URL query params if you want) ----
     const DEFAULTS = {
       bito_user_id: "1185",
       bito_email_id: "you@example.com",
       workspace_id: "1659",
-      client_id: "YOUR_BITBUCKET_OAUTH_CLIENT_ID",
+      // Your Go callback (GET) — same one you used earlier from the static 4002 flow
       callback_url: "https://b03484de5224.ngrok-free.app/int/api/v1/oauth/bitbucket/callback"
     };
 
-    // ---- read URL params if provided ----
+    // Read params like ?bito_user_id=...&bito_email_id=...&workspace_id=...&callback_url=...
     const params = new URLSearchParams(window.location.search);
-    const bitoUserId  = params.get("bito_user_id")  || DEFAULTS.bito_user_id;
-    const bitoEmail   = params.get("bito_email_id") || DEFAULTS.bito_email_id;
-    const workspaceId = params.get("workspace_id")  || DEFAULTS.workspace_id;
-    const clientId    = params.get("client_id")     || DEFAULTS.client_id;
-    const callbackUrl = params.get("callback_url")  || DEFAULTS.callback_url;
+    const getP = (k, d) => (params.get(k) ?? d);
 
-    // ---- update UI ----
+    const bitoUserId  = getP("bito_user_id",  DEFAULTS.bito_user_id);
+    const bitoEmail   = getP("bito_email_id", DEFAULTS.bito_email_id);
+    const workspaceId = getP("workspace_id",  DEFAULTS.workspace_id);
+    const callbackUrl = getP("callback_url",  DEFAULTS.callback_url);
+
+    // Show values
     document.getElementById("bitoUserId").textContent  = bitoUserId;
     document.getElementById("bitoEmail").textContent   = bitoEmail;
     document.getElementById("workspaceId").textContent = workspaceId;
 
-    // ---- build state ----
+    // Build state -> Base64 (same pattern you used earlier)
     function buildState() {
       return {
-        workspace_id: workspaceId,
-        user_id: bitoUserId,
-        user_email: bitoEmail,
-        source: "landing-ui",
+        workspace_id: isNaN(Number(workspaceId)) ? workspaceId : Number(workspaceId),
+        user_id:      isNaN(Number(bitoUserId))  ? bitoUserId  : Number(bitoUserId),
+        user_email:   bitoEmail,
+        source:       "landing-ui",
         redirect_uri: callbackUrl
       };
     }
-
     function encodeState(obj) {
       return btoa(encodeURIComponent(JSON.stringify(obj)));
     }
-
-    function buildAuthUrl(encodedState) {
-      return (
-        "https://bitbucket.org/site/oauth2/authorize" +
-        `?client_id=${encodeURIComponent(clientId)}` +
-        `&response_type=code` +
-        `&redirect_uri=${encodeURIComponent(callbackUrl)}` +
-        `&state=${encodeURIComponent(encodedState)}`
-      );
+    function buildFinalUrl(encodedState) {
+      const u = new URL(callbackUrl);
+      u.searchParams.set("state", encodedState);
+      return u.toString();
     }
 
-    // ---- preview + button ----
     function refreshPreview() {
-      const state = buildState();
-      const enc = encodeState(state);
-      const url = buildAuthUrl(enc);
-      document.getElementById("statePreview").textContent = JSON.stringify(state, null, 2);
+      const st  = buildState();
+      const enc = encodeState(st);
+      const url = buildFinalUrl(enc);
+      document.getElementById("statePreview").textContent = JSON.stringify(st, null, 2);
       document.getElementById("finalUrl").textContent = url;
       return url;
     }
 
-    let finalUrl = refreshPreview();
+    // Initial preview
+    refreshPreview();
 
+    // Buttons
     document.getElementById("connectBtn").addEventListener("click", () => {
       window.location.href = refreshPreview();
+    });
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(refreshPreview());
+        alert("Callback URL copied to clipboard!");
+      } catch (e) {
+        alert("Copy failed: " + e);
+      }
     });
   </script>
 </body>
