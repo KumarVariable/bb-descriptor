@@ -5,91 +5,60 @@
   <title>Bito CRA – Landing</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#f9fafb; margin:0; }
-    .wrap { max-width: 820px; margin: 8vh auto; background:#fff; border-radius: 14px; padding: 28px; box-shadow: 0 8px 24px rgba(0,0,0,.08) }
-    h1 { margin:0 0 8px; color:#0c48c4; font-size:26px }
-    p { margin:8px 0; color:#333 }
-    code { background:#f5f5f5; padding:2px 6px; border-radius:6px }
-    .grid { display:grid; grid-template-columns: 160px 1fr; gap:8px 16px; align-items:center; margin:16px 0 20px }
-    .btn { display:inline-block; padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:600; background:#0c48c4; color:#fff; border:none; cursor:pointer; margin-right:10px }
-    .btn.secondary { background:#1f7a1f }
-    .btn:active { transform: translateY(1px) }
-    .muted { color:#666; font-size:13px; margin-top:14px }
-    .box { background:#fafafa; padding:12px; border-radius:10px; font-size:13px; overflow:auto }
-    .rowlabel { color:#666 }
-    pre { margin:0; white-space:pre-wrap; word-break:break-all }
+    body { font-family: Arial, sans-serif; background:#f9fafb; margin:0; }
+    .wrap { max-width:600px; margin:10vh auto; background:#fff; border-radius:12px; padding:28px; box-shadow:0 4px 12px rgba(0,0,0,.1); }
+    h1 { margin-top:0; color:#0c48c4; }
+    code { background:#f5f5f5; padding:2px 6px; border-radius:4px; }
+    .btn { display:inline-block; margin-top:20px; padding:12px 20px; background:#0c48c4; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600; }
+    pre { background:#fafafa; padding:10px; border-radius:6px; font-size:13px; overflow:auto; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>Bito CRA – Installation Landing</h1>
-    <p>This page starts OAuth <strong>after</strong> install. Choose either the relay path or direct Bitbucket OAuth.</p>
+    <p>Click below to connect your Bitbucket account with Bito CRA.</p>
 
-    <div class="grid">
-      <div class="rowlabel">Bito User ID</div><div id="bitoUserIdView"><code>—</code></div>
-      <div class="rowlabel">Bito Email</div><div id="bitoEmailView"><code>—</code></div>
-      <div class="rowlabel">Workspace ID</div><div id="workspaceIdView"><code>—</code></div>
-    </div>
+    <p><strong>Bito User ID:</strong> <code id="bitoUserId">—</code></p>
+    <p><strong>Bito Email:</strong> <code id="bitoEmail">—</code></p>
+    <p><strong>Workspace ID:</strong> <code id="workspaceId">—</code></p>
 
-    <button class="btn" id="connectRelayBtn">Connect via Relay</button>
-    <button class="btn secondary" id="connectDirectBtn">Connect Direct (Bitbucket OAuth)</button>
+    <button class="btn" id="connectBtn">Connect to Bito CRA</button>
 
-    <div class="muted">
-      Relay: hits your <code>/oauth/bitbucket/relay</code> which 302’s to Bitbucket.<br/>
-      Direct: builds <code>https://bitbucket.org/site/oauth2/authorize</code> here and sends you there.
-    </div>
-
-    <h3 style="margin-top:24px">Debug (state we’ll send)</h3>
-    <div class="box"><pre id="statePreview">{}</pre></div>
-
-    <h3 style="margin-top:16px">Preview URLs</h3>
-    <div class="box"><strong>Relay URL</strong><br/><pre id="relayUrl">—</pre></div>
-    <div class="box" style="margin-top:10px"><strong>Direct OAuth URL</strong><br/><pre id="directUrl">—</pre></div>
+    <h3>Debug</h3>
+    <pre id="statePreview">{}</pre>
+    <pre id="finalUrl">—</pre>
   </div>
 
   <script>
-    // ---- 1) Defaults (override via URL params if you like) ----
+    // ---- defaults (replace with your real client_id & callback) ----
     const DEFAULTS = {
       bito_user_id: "1185",
       bito_email_id: "you@example.com",
       workspace_id: "1659",
-      source: "landing-ui",
-      // Your relay "start" endpoint (NOT the callback). It should accept ?state=... and 302 to Bitbucket authorize.
-      relay_start: "https://integrations.bito.ai/int/api/v1/oauth/bitbucket/relay",
-      // Or for local testing, swap to your ngrok relay-start endpoint:
-      // relay_start: "https://<your-ngrok>.ngrok-free.app/int/api/v1/oauth/bitbucket/relay",
-
-      // Bitbucket OAuth app client_id + callback used for "Direct" button:
       client_id: "YOUR_BITBUCKET_OAUTH_CLIENT_ID",
-      callback_url: "https://integrations.bito.ai/int/api/v1/oauth/bitbucket/callback"
-      // or your ngrok callback:
-      // callback_url: "https://b03484de5224.ngrok-free.app/int/api/v1/oauth/bitbucket/callback"
+      callback_url: "https://b03484de5224.ngrok-free.app/int/api/v1/oauth/bitbucket/callback"
     };
 
-    // ---- 2) Read URL params (if provided) ----
+    // ---- read URL params if provided ----
     const params = new URLSearchParams(window.location.search);
-    const getParam = (k, d) => (params.get(k) ?? d);
+    const bitoUserId  = params.get("bito_user_id")  || DEFAULTS.bito_user_id;
+    const bitoEmail   = params.get("bito_email_id") || DEFAULTS.bito_email_id;
+    const workspaceId = params.get("workspace_id")  || DEFAULTS.workspace_id;
+    const clientId    = params.get("client_id")     || DEFAULTS.client_id;
+    const callbackUrl = params.get("callback_url")  || DEFAULTS.callback_url;
 
-    const bitoUserId   = getParam("bito_user_id",   DEFAULTS.bito_user_id);
-    const bitoEmail    = getParam("bito_email_id",  DEFAULTS.bito_email_id);
-    const workspaceId  = getParam("workspace_id",   DEFAULTS.workspace_id);
-    const source       = getParam("source",         DEFAULTS.source);
-    const relayStart   = getParam("relay_start",    DEFAULTS.relay_start);
-    const clientId     = getParam("client_id",      DEFAULTS.client_id);
-    const callbackUrl  = getParam("callback_url",   DEFAULTS.callback_url);
+    // ---- update UI ----
+    document.getElementById("bitoUserId").textContent  = bitoUserId;
+    document.getElementById("bitoEmail").textContent   = bitoEmail;
+    document.getElementById("workspaceId").textContent = workspaceId;
 
-    // ---- 3) Update UI ----
-    document.getElementById("bitoUserIdView").innerHTML = `<code>${bitoUserId}</code>`;
-    document.getElementById("bitoEmailView").innerHTML = `<code>${bitoEmail}</code>`;
-    document.getElementById("workspaceIdView").innerHTML = `<code>${workspaceId}</code>`;
-
-    // ---- 4) Build state + Base64 encode (same pattern you used before) ----
+    // ---- build state ----
     function buildState() {
       return {
-        workspace_id: isNaN(Number(workspaceId)) ? workspaceId : Number(workspaceId),
-        user_id: isNaN(Number(bitoUserId)) ? bitoUserId : Number(bitoUserId),
+        workspace_id: workspaceId,
+        user_id: bitoUserId,
         user_email: bitoEmail,
-        source: source,
+        source: "landing-ui",
         redirect_uri: callbackUrl
       };
     }
@@ -98,41 +67,30 @@
       return btoa(encodeURIComponent(JSON.stringify(obj)));
     }
 
-    // ---- 5) Build URLs ----
-    function relayUrl(encodedState) {
-      const u = new URL(relayStart);
-      u.searchParams.set("state", encodedState);
-      return u.toString();
+    function buildAuthUrl(encodedState) {
+      return (
+        "https://bitbucket.org/site/oauth2/authorize" +
+        `?client_id=${encodeURIComponent(clientId)}` +
+        `&response_type=code` +
+        `&redirect_uri=${encodeURIComponent(callbackUrl)}` +
+        `&state=${encodeURIComponent(encodedState)}`
+      );
     }
 
-    function directOAuthUrl(encodedState) {
-      const u = new URL("https://bitbucket.org/site/oauth2/authorize");
-      u.searchParams.set("client_id", clientId);
-      u.searchParams.set("response_type", "code");
-      u.searchParams.set("redirect_uri", callbackUrl);
-      u.searchParams.set("state", encodedState);
-      return u.toString();
-    }
-
-    // ---- 6) Preview + Buttons ----
+    // ---- preview + button ----
     function refreshPreview() {
       const state = buildState();
       const enc = encodeState(state);
+      const url = buildAuthUrl(enc);
       document.getElementById("statePreview").textContent = JSON.stringify(state, null, 2);
-      document.getElementById("relayUrl").textContent = relayUrl(enc);
-      document.getElementById("directUrl").textContent = directOAuthUrl(enc);
-      return enc;
+      document.getElementById("finalUrl").textContent = url;
+      return url;
     }
-    let encState = refreshPreview();
 
-    document.getElementById("connectRelayBtn").addEventListener("click", () => {
-      encState = refreshPreview();
-      window.location.href = relayUrl(encState);
-    });
+    let finalUrl = refreshPreview();
 
-    document.getElementById("connectDirectBtn").addEventListener("click", () => {
-      encState = refreshPreview();
-      window.location.href = directOAuthUrl(encState);
+    document.getElementById("connectBtn").addEventListener("click", () => {
+      window.location.href = refreshPreview();
     });
   </script>
 </body>
