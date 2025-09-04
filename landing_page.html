@@ -2,49 +2,174 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sample Landing Screen</title>
+  <title>Bito CRA – Landing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f9fafc;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #f9fafb;
       margin: 0;
     }
-    .container {
+    .wrap {
+      max-width: 720px;
+      margin: 8vh auto;
       background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 40px;
-      text-align: center;
-      max-width: 480px;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
     }
     h1 {
-      color: #0052cc; /* Atlassian blue */
-      margin-bottom: 16px;
+      margin: 0 0 8px;
+      color: #0c48c4;
+      font-size: 26px;
     }
     p {
-      font-size: 16px;
-      margin-bottom: 24px;
+      margin: 8px 0;
+      color: #333;
     }
-    .footer {
-      font-size: 12px;
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 8px 16px;
+      align-items: center;
+      margin: 16px 0 20px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      background: #0c48c4;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .btn:active {
+      transform: translateY(1px);
+    }
+    .muted {
       color: #666;
-      margin-top: 20px;
+      font-size: 13px;
+      margin-top: 14px;
+    }
+    .box {
+      background: #fafafa;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      overflow: auto;
+    }
+    .rowlabel {
+      color: #666;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Connect App Installed 🎉</h1>
-    <p>This is the landing screen you see after installation.</p>
-    <p>Your Bitbucket app has successfully redirected here.</p>
-    <div class="footer">Static demo landing page</div>
+  <div class="wrap">
+    <h1>Bito CRA – Installation Landing</h1>
+    <p>This is your post-install landing screen. You can connect directly or copy the callback URL to test manually.</p>
+
+    <div class="grid">
+      <div class="rowlabel">Bito User ID</div><div id="bitoUserIdView"><code>—</code></div>
+      <div class="rowlabel">Bito Email</div><div id="bitoEmailView"><code>—</code></div>
+      <div class="rowlabel">Workspace ID</div><div id="workspaceIdView"><code>—</code></div>
+    </div>
+
+    <button class="btn" id="connectBtn">Connect to Bito CRA</button>
+    <button class="btn" id="copyBtn">Copy Callback URL</button>
+
+    <div class="muted">
+      The Connect button will redirect to your callback URL with Base64-encoded <code>state</code>.  
+      The Copy button will copy that URL so you can open it manually in another tab.
+    </div>
+
+    <h3 style="margin-top:24px">Debug (what we'll send)</h3>
+    <div class="box"><pre id="statePreview">{}</pre></div>
+    <div class="box" style="margin-top:10px"><pre id="finalUrl">—</pre></div>
   </div>
+
+  <script>
+    // ---- 1) Configure fallbacks (can be overridden by URL params) ----
+    const DEFAULTS = {
+      bito_user_id: "1185",
+      bito_email_id: "you@example.com",
+      workspace_id: "1659",
+      source: "landing-ui",
+      callback_url: "https://b03484de5224.ngrok-free.app/int/api/v1/oauth/bitbucket/callback"
+    };
+
+    // ---- 2) Read URL params (if provided) ----
+    const params = new URLSearchParams(window.location.search);
+    function getParam(key, fallback) {
+      const val = params.get(key);
+      return (val !== null && val !== "") ? val : fallback;
+    }
+
+    const bitoUserId = getParam("bito_user_id", DEFAULTS.bito_user_id);
+    const bitoEmail = getParam("bito_email_id", DEFAULTS.bito_email_id);
+    const workspaceId = getParam("workspace_id", DEFAULTS.workspace_id);
+    const source = getParam("source", DEFAULTS.source);
+    const callbackUrl = getParam("callback_url", DEFAULTS.callback_url);
+
+    // ---- 3) Update UI ----
+    document.getElementById("bitoUserIdView").innerHTML = `<code>${bitoUserId}</code>`;
+    document.getElementById("bitoEmailView").innerHTML = `<code>${bitoEmail}</code>`;
+    document.getElementById("workspaceIdView").innerHTML = `<code>${workspaceId}</code>`;
+
+    // ---- 4) Build state + Base64 encode ----
+    function buildState() {
+      return {
+        workspace_id: isNaN(Number(workspaceId)) ? workspaceId : Number(workspaceId),
+        user_id: isNaN(Number(bitoUserId)) ? bitoUserId : Number(bitoUserId),
+        user_email: bitoEmail,
+        source: source,
+        redirect_uri: callbackUrl
+      };
+    }
+
+    function encodeState(obj) {
+      const json = JSON.stringify(obj);
+      return btoa(encodeURIComponent(json));
+    }
+
+    function buildFinalUrl(encodedState) {
+      const url = new URL(callbackUrl);
+      url.searchParams.set("state", encodedState);
+      return url.toString();
+    }
+
+    // ---- 5) Hook up buttons ----
+    function refreshPreview() {
+      const state = buildState();
+      const enc = encodeState(state);
+      const final = buildFinalUrl(enc);
+      document.getElementById("statePreview").textContent = JSON.stringify(state, null, 2);
+      document.getElementById("finalUrl").textContent = final;
+      return { enc, final };
+    }
+    let { final } = refreshPreview();
+
+    document.getElementById("connectBtn").addEventListener("click", () => {
+      const refreshed = refreshPreview();
+      window.location.href = refreshed.final;
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const refreshed = refreshPreview();
+      try {
+        await navigator.clipboard.writeText(refreshed.final);
+        alert("Callback URL copied to clipboard!");
+      } catch (err) {
+        alert("Failed to copy: " + err);
+      }
+    });
+  </script>
 </body>
 </html>
