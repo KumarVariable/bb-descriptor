@@ -1,0 +1,14 @@
+{
+  "name": "bito-cra-bitbucket",
+  "version": "1.0.0",
+  "description": "Bito Coder Review Agent - Bitbucket Descriptor",
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.17"
+  }
+}
